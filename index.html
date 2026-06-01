@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShapeLab Video Exporter</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --page: #f5f5f7;
+      --surface: rgba(255, 255, 255, 0.78);
+      --surface-solid: #ffffff;
+      --surface-secondary: #f2f2f4;
+      --surface-tertiary: #e9e9ec;
+      --text: #1d1d1f;
+      --secondary: #6e6e73;
+      --tertiary: #98989d;
+      --border: rgba(0, 0, 0, 0.1);
+      --border-strong: rgba(0, 0, 0, 0.16);
+      --blue: #007aff;
+      --blue-hover: #006ee6;
+      --red: #ff3b30;
+      --shadow: 0 18px 60px rgba(0, 0, 0, 0.12);
+      --radius-xl: 28px;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --sidebar-width: 342px;
+    }
+
+    body.dark-preview {
+      --preview-chrome: #1c1c1e;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 20% -10%, rgba(0, 122, 255, 0.13), transparent 34rem),
+        radial-gradient(circle at 90% 0%, rgba(120, 120, 128, 0.12), transparent 30rem),
+        var(--page);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app-shell {
+      width: min(1440px, 100%);
+      min-height: calc(100vh - 48px);
+      margin: 0 auto;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      background: rgba(255, 255, 255, 0.56);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(26px);
+    }
+
+    .toolbar {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(30px);
+    }
+
+    .app-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .app-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.48)),
+        #f2f2f4;
+      border: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      padding: 8px;
+      flex: 0 0 auto;
+    }
+
+    .app-icon span {
+      border-radius: 50%;
+      background: var(--text);
+      opacity: 0.84;
+    }
+
+    .title-copy {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--secondary);
+      font-size: 0.86rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+      min-height: 0;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--border);
+      background: rgba(245, 245, 247, 0.82);
+      padding: 18px;
+      overflow: auto;
+    }
+
+    .main {
+      padding: 18px;
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 14px;
+      background: rgba(255, 255, 255, 0.36);
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      padding: 13px 15px 10px;
+      border-bottom: 1px solid var(--border);
+      color: var(--secondary);
+      font-size: 0.78rem;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.055em;
+      font-weight: 700;
+    }
+
+    .control-list {
+      display: grid;
+    }
+
+    .control {
+      display: grid;
+      grid-template-columns: minmax(96px, 0.9fr) minmax(0, 1.1fr);
+      align-items: center;
+      gap: 12px;
+      min-height: 52px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .control:last-child {
+      border-bottom: none;
+    }
+
+    .control.full {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    label,
+    .label {
+      color: var(--text);
+      font-size: 0.91rem;
+      line-height: 1.25;
+      font-weight: 500;
+    }
+
+    .value-label {
+      color: var(--secondary);
+      font-size: 0.82rem;
+      font-variant-numeric: tabular-nums;
+      justify-self: end;
+    }
+
+    .range-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+
+    .range-wrap {
+      display: grid;
+      gap: 7px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      color: var(--secondary);
+      font-size: 0.86rem;
+    }
+
+    input[type="file"]::file-selector-button {
+      border: 0;
+      border-radius: 999px;
+      background: var(--blue);
+      color: #fff;
+      font-weight: 600;
+      padding: 8px 12px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+
+    select,
+    input[type="color"] {
+      width: 100%;
+      min-height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--text);
+      padding: 7px 10px;
+      outline: none;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+
+    select:focus,
+    input[type="color"]:focus {
+      border-color: rgba(0, 122, 255, 0.65);
+      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.13);
+      background: #fff;
+    }
+
+    input[type="color"] {
+      padding: 3px;
+      cursor: pointer;
+    }
+
+    input[type="color"]:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+      cursor: pointer;
+    }
+
+    button,
+    .upload-btn {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      min-height: 36px;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.88);
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      user-select: none;
+    }
+
+    button:hover,
+    .upload-btn:hover {
+      background: #fff;
+      border-color: var(--border-strong);
+      box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
+      transform: translateY(-1px);
+    }
+
+    button:active,
+    .upload-btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .primary-btn {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .primary-btn:hover {
+      border-color: var(--blue-hover);
+      background: var(--blue-hover);
+    }
+
+    .recording-style {
+      border-color: rgba(255, 59, 48, 0.35) !important;
+      background: rgba(255, 59, 48, 0.12) !important;
+      color: var(--red) !important;
+    }
+
+    .hidden-file {
+      display: none;
+    }
+
+    .top-file-input {
+      display: none;
+    }
+
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 42px;
+    }
+
+    .preview-title {
+      display: grid;
+      gap: 2px;
+    }
+
+    .preview-title strong {
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .preview-title span {
+      font-size: 0.84rem;
+      color: var(--secondary);
+    }
+
+    .preview-status {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.76);
+      border: 1px solid var(--border);
+      color: var(--secondary);
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--tertiary);
+    }
+
+    .chip-dot.live {
+      background: #34c759;
+    }
+
+    .stage-card {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-height: 0;
+      gap: 12px;
+    }
+
+    .stage-wrap {
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-xl);
+      background:
+        linear-gradient(45deg, rgba(0, 0, 0, 0.055) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(0, 0, 0, 0.055) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.055) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.055) 75%),
+        #d7d7dc;
+      background-size: 30px 30px;
+      background-position: 0 0, 0 15px, 15px -15px, -15px 0;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    }
+
+    .stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: transparent;
+    }
+
+    .overlay-message {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 22px;
+      pointer-events: none;
+      color: rgba(29, 29, 31, 0.42);
+      font-size: clamp(1.3rem, 3.2vw, 3.2rem);
+      line-height: 0.95;
+      letter-spacing: -0.055em;
+      font-weight: 700;
+    }
+
+    .overlay-message.hidden {
+      display: none;
+    }
+
+    .status-bar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      padding-top: 2px;
+    }
+
+    .status-item {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.62);
+      padding: 11px 12px;
+    }
+
+    .status-item span {
+      display: block;
+      color: var(--tertiary);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .status-item strong {
+      display: block;
+      color: var(--text);
+      font-size: 0.88rem;
+      line-height: 1.22;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+    }
+
+    .recording {
+      color: var(--red) !important;
+    }
+
+    .note {
+      margin: 0;
+      color: var(--secondary);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    video {
+      display: none;
+    }
+
+    @media (max-width: 1080px) {
+      body {
+        padding: 14px;
+      }
+
+      .app-shell {
+        min-height: calc(100vh - 28px);
+        border-radius: 24px;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        overflow: visible;
+      }
+
+      .section {
+        margin-bottom: 0;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .toolbar {
+        height: auto;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .toolbar-actions {
+        justify-content: flex-start;
+      }
+
+      .sidebar {
+        grid-template-columns: 1fr;
+      }
+
+      .control {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .status-bar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .preview-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .preview-status {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="toolbar">
+      <div class="app-title">
+        <div class="app-icon" aria-hidden="true">
+          <span></span><span></span><span></span>
+          <span></span><span></span><span></span>
+          <span></span><span></span><span></span>
+        </div>
+        <div class="title-copy">
+          <h1>ShapeLab</h1>
+          <div class="subtitle">Video to black-and-white shape renderer</div>
+        </div>
+      </div>
+
+      <div class="toolbar-actions">
+        <label class="upload-btn" for="videoUpload">Choose Video</label>
+        <button id="playPause" disabled>Play</button>
+        <button id="exportBtn" class="primary-btn" disabled>Export</button>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <aside class="sidebar">
+        <section class="section">
+          <div class="section-title">Source</div>
+          <div class="control-list">
+            <div class="control full">
+              <input id="videoUpload" type="file" accept="video/*" />
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-title">Appearance</div>
+          <div class="control-list">
+            <div class="control">
+              <label for="shapeType">Shape</label>
+              <select id="shapeType">
+                <option value="circle">Circles</option>
+                <option value="square">Squares</option>
+                <option value="triangle">Triangles</option>
+                <option value="diamond">Diamonds</option>
+                <option value="hexagon">Hexagons</option>
+                <option value="cross">Crosses</option>
+                <option value="plus">Plus Signs</option>
+                <option value="star">Stars</option>
+                <option value="line">Lines</option>
+                <option value="slash">Slashes</option>
+                <option value="ring">Rings</option>
+              </select>
+            </div>
+
+            <div class="control">
+              <label for="bgMode">Background</label>
+              <select id="bgMode">
+                <option value="solid">Solid Colour</option>
+                <option value="transparent">Transparent</option>
+              </select>
+            </div>
+
+            <div class="control">
+              <label for="bgColor">Colour</label>
+              <input id="bgColor" type="color" value="#d8cdb8" />
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-title">Shape</div>
+          <div class="control-list">
+            <div class="control full">
+              <div class="range-head">
+                <label for="cellSize">Spacing</label>
+                <span class="value-label" id="cellValue">14</span>
+              </div>
+              <input id="cellSize" type="range" min="5" max="60" value="14" />
+            </div>
+
+            <div class="control full">
+              <div class="range-head">
+                <label for="threshold">Threshold</label>
+                <span class="value-label" id="thresholdValue">128</span>
+              </div>
+              <input id="threshold" type="range" min="0" max="255" value="128" />
+            </div>
+
+            <div class="control full">
+              <div class="range-head">
+                <label for="shapeScale">Size</label>
+                <span class="value-label"><span id="shapeScaleValue">100</span>%</span>
+              </div>
+              <input id="shapeScale" type="range" min="20" max="180" value="100" />
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-title">Video</div>
+          <div class="control-list">
+            <div class="control full">
+              <div class="range-head">
+                <label for="videoScale">Scale</label>
+                <span class="value-label"><span id="videoScaleValue">100</span>%</span>
+              </div>
+              <input id="videoScale" type="range" min="25" max="250" value="100" />
+            </div>
+
+            <div class="control full">
+              <div class="range-head">
+                <label for="videoOffsetX">Position X</label>
+                <span class="value-label"><span id="offsetXValue">0</span>%</span>
+              </div>
+              <input id="videoOffsetX" type="range" min="-100" max="100" value="0" />
+            </div>
+
+            <div class="control full">
+              <div class="range-head">
+                <label for="videoOffsetY">Position Y</label>
+                <span class="value-label"><span id="offsetYValue">0</span>%</span>
+              </div>
+              <input id="videoOffsetY" type="range" min="-100" max="100" value="0" />
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-title">Export</div>
+          <div class="control-list">
+            <div class="control">
+              <label for="outputSize">Size</label>
+              <select id="outputSize">
+                <option value="preview">Preview Size</option>
+                <option value="720">1280 × 720</option>
+                <option value="1080">1920 × 1080</option>
+                <option value="square">1080 × 1080</option>
+                <option value="vertical">1080 × 1920</option>
+              </select>
+            </div>
+            <div class="control full">
+              <button id="resetBtn">Reset Controls</button>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <main class="main">
+        <div class="preview-header">
+          <div class="preview-title">
+            <strong>Preview</strong>
+            <span>Drag a video onto the canvas or choose a file.</span>
+          </div>
+          <div class="preview-status">
+            <span class="chip"><span class="chip-dot live"></span>Local render</span>
+            <span class="chip">WebM output</span>
+          </div>
+        </div>
+
+        <section class="stage-card">
+          <section class="stage-wrap">
+            <div class="stage" id="stage">
+              <canvas id="canvas"></canvas>
+              <div class="overlay-message" id="overlayMessage">Drop video here</div>
+            </div>
+          </section>
+        </section>
+
+        <section class="status-bar">
+          <div class="status-item">
+            <span>Status</span>
+            <strong id="status">No video loaded</strong>
+          </div>
+          <div class="status-item">
+            <span>Canvas</span>
+            <strong id="canvasInfo">Ready</strong>
+          </div>
+          <div class="status-item">
+            <span>Background</span>
+            <strong id="backgroundInfo">Solid colour</strong>
+          </div>
+          <div class="status-item">
+            <span>Export</span>
+            <strong id="exportStatus">Not recording</strong>
+          </div>
+        </section>
+
+        <p class="note">Transparent exports are saved as WebM. Alpha transparency works best with VP9 WebM in Chromium-based browsers.</p>
+      </main>
+    </section>
+
+    <video id="video" muted playsinline></video>
+  </main>
+
+  <script>
+    const videoUpload = document.getElementById("videoUpload");
+    const shapeType = document.getElementById("shapeType");
+    const bgMode = document.getElementById("bgMode");
+    const bgColorInput = document.getElementById("bgColor");
+    const cellSizeSlider = document.getElementById("cellSize");
+    const thresholdSlider = document.getElementById("threshold");
+    const shapeScaleSlider = document.getElementById("shapeScale");
+    const videoScaleSlider = document.getElementById("videoScale");
+    const videoOffsetXSlider = document.getElementById("videoOffsetX");
+    const videoOffsetYSlider = document.getElementById("videoOffsetY");
+    const outputSize = document.getElementById("outputSize");
+    const playPauseBtn = document.getElementById("playPause");
+    const exportBtn = document.getElementById("exportBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const stage = document.getElementById("stage");
+    const canvas = document.getElementById("canvas");
+    const overlayMessage = document.getElementById("overlayMessage");
+    const statusText = document.getElementById("status");
+    const canvasInfo = document.getElementById("canvasInfo");
+    const backgroundInfo = document.getElementById("backgroundInfo");
+    const exportStatus = document.getElementById("exportStatus");
+    const cellValue = document.getElementById("cellValue");
+    const thresholdValue = document.getElementById("thresholdValue");
+    const shapeScaleValue = document.getElementById("shapeScaleValue");
+    const videoScaleValue = document.getElementById("videoScaleValue");
+    const offsetXValue = document.getElementById("offsetXValue");
+    const offsetYValue = document.getElementById("offsetYValue");
+    const video = document.getElementById("video");
+
+    const ctx = canvas.getContext("2d");
+    const sampleCanvas = document.createElement("canvas");
+    const sampleCtx = sampleCanvas.getContext("2d", { willReadFrequently: true });
+
+    let animationFrameId = null;
+    let currentURL = null;
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let isRecording = false;
+    let previewWidth = 0;
+    let previewHeight = 0;
+
+    function getExportDimensions() {
+      const selected = outputSize.value;
+
+      if (selected === "720") return { width: 1280, height: 720 };
+      if (selected === "1080") return { width: 1920, height: 1080 };
+      if (selected === "square") return { width: 1080, height: 1080 };
+      if (selected === "vertical") return { width: 1080, height: 1920 };
+
+      return { width: previewWidth, height: previewHeight };
+    }
+
+    function resizeCanvas() {
+      const rect = stage.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      previewWidth = Math.round(rect.width * dpr);
+      previewHeight = Math.round(rect.height * dpr);
+
+      if (!isRecording || outputSize.value === "preview") {
+        canvas.width = previewWidth;
+        canvas.height = previewHeight;
+      }
+
+      canvasInfo.textContent = `${canvas.width} × ${canvas.height}`;
+      updateBackgroundInfo();
+      drawIdleBackground();
+    }
+
+    function updateBackgroundInfo() {
+      backgroundInfo.textContent = bgMode.value === "transparent" ? "Transparent" : "Solid colour";
+      bgColorInput.disabled = bgMode.value === "transparent";
+    }
+
+    function clearBackground(targetCtx, width, height) {
+      targetCtx.clearRect(0, 0, width, height);
+
+      if (bgMode.value === "solid") {
+        targetCtx.fillStyle = bgColorInput.value;
+        targetCtx.fillRect(0, 0, width, height);
+      }
+    }
+
+    function drawIdleBackground() {
+      clearBackground(ctx, canvas.width, canvas.height);
+    }
+
+    function getFitRect(videoWidth, videoHeight, targetWidth, targetHeight) {
+      const videoRatio = videoWidth / videoHeight;
+      const targetRatio = targetWidth / targetHeight;
+
+      let drawWidth;
+      let drawHeight;
+
+      if (videoRatio > targetRatio) {
+        drawWidth = targetWidth;
+        drawHeight = targetWidth / videoRatio;
+      } else {
+        drawHeight = targetHeight;
+        drawWidth = targetHeight * videoRatio;
+      }
+
+      const scale = Number(videoScaleSlider.value) / 100;
+      drawWidth *= scale;
+      drawHeight *= scale;
+
+      const offsetX = Number(videoOffsetXSlider.value) / 100;
+      const offsetY = Number(videoOffsetYSlider.value) / 100;
+
+      const x = (targetWidth - drawWidth) / 2 + offsetX * targetWidth * 0.5;
+      const y = (targetHeight - drawHeight) / 2 + offsetY * targetHeight * 0.5;
+
+      return { x, y, drawWidth, drawHeight };
+    }
+
+    function polygon(points) {
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        if (index === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      });
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawStar(x, y, outerRadius, innerRadius, points) {
+      ctx.beginPath();
+      for (let i = 0; i < points * 2; i++) {
+        const angle = -Math.PI / 2 + i * Math.PI / points;
+        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+        const px = x + Math.cos(angle) * radius;
+        const py = y + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawShape(type, x, y, size, color) {
+      ctx.fillStyle = color;
+      ctx.strokeStyle = color;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      if (type === "circle") {
+        ctx.beginPath();
+        ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
+
+      if (type === "square") {
+        ctx.fillRect(x - size / 2, y - size / 2, size, size);
+        return;
+      }
+
+      if (type === "triangle") {
+        const h = size * 0.95;
+        polygon([
+          { x, y: y - h / 2 },
+          { x: x - size / 2, y: y + h / 2 },
+          { x: x + size / 2, y: y + h / 2 }
+        ]);
+        return;
+      }
+
+      if (type === "diamond") {
+        polygon([
+          { x, y: y - size / 2 },
+          { x: x + size / 2, y },
+          { x, y: y + size / 2 },
+          { x: x - size / 2, y }
+        ]);
+        return;
+      }
+
+      if (type === "hexagon") {
+        const r = size / 2;
+        const points = [];
+        for (let i = 0; i < 6; i++) {
+          const angle = Math.PI / 6 + i * Math.PI / 3;
+          points.push({ x: x + Math.cos(angle) * r, y: y + Math.sin(angle) * r });
+        }
+        polygon(points);
+        return;
+      }
+
+      if (type === "cross") {
+        const thickness = size * 0.28;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillRect(-thickness / 2, -size / 2, thickness, size);
+        ctx.fillRect(-size / 2, -thickness / 2, size, thickness);
+        ctx.restore();
+        return;
+      }
+
+      if (type === "plus") {
+        const thickness = size * 0.3;
+        ctx.fillRect(x - thickness / 2, y - size / 2, thickness, size);
+        ctx.fillRect(x - size / 2, y - thickness / 2, size, thickness);
+        return;
+      }
+
+      if (type === "star") {
+        drawStar(x, y, size / 2, size / 4.8, 5);
+        return;
+      }
+
+      if (type === "line") {
+        ctx.lineWidth = Math.max(1, size * 0.22);
+        ctx.beginPath();
+        ctx.moveTo(x - size / 2, y);
+        ctx.lineTo(x + size / 2, y);
+        ctx.stroke();
+        return;
+      }
+
+      if (type === "slash") {
+        ctx.lineWidth = Math.max(1, size * 0.22);
+        ctx.beginPath();
+        ctx.moveTo(x - size / 2, y + size / 2);
+        ctx.lineTo(x + size / 2, y - size / 2);
+        ctx.stroke();
+        return;
+      }
+
+      if (type === "ring") {
+        ctx.lineWidth = Math.max(1, size * 0.16);
+        ctx.beginPath();
+        ctx.arc(x, y, size / 2.4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function renderFrame() {
+      if (!video.videoWidth || !video.videoHeight) return;
+
+      const cellSize = Number(cellSizeSlider.value);
+      const threshold = Number(thresholdSlider.value);
+      const shapeScale = Number(shapeScaleSlider.value) / 100;
+      const shape = shapeType.value;
+
+      const cols = Math.max(1, Math.floor(canvas.width / cellSize));
+      const rows = Math.max(1, Math.floor(canvas.height / cellSize));
+
+      sampleCanvas.width = cols;
+      sampleCanvas.height = rows;
+
+      sampleCtx.clearRect(0, 0, cols, rows);
+
+      const fit = getFitRect(video.videoWidth, video.videoHeight, cols, rows);
+      sampleCtx.drawImage(video, fit.x, fit.y, fit.drawWidth, fit.drawHeight);
+
+      const frameData = sampleCtx.getImageData(0, 0, cols, rows).data;
+
+      clearBackground(ctx, canvas.width, canvas.height);
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const i = (y * cols + x) * 4;
+          const r = frameData[i];
+          const g = frameData[i + 1];
+          const b = frameData[i + 2];
+          const a = frameData[i + 3] / 255;
+
+          if (a < 0.05) continue;
+
+          const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+          const color = brightness >= threshold ? "#ffffff" : "#000000";
+          const distanceFromThreshold = Math.abs(brightness - threshold) / 255;
+          const baseSize = cellSize * (0.25 + distanceFromThreshold * 1.2);
+          const size = Math.max(2, Math.min(baseSize * shapeScale, cellSize * 1.45));
+
+          const px = x * cellSize + cellSize / 2;
+          const py = y * cellSize + cellSize / 2;
+
+          drawShape(shape, px, py, size, color);
+        }
+      }
+    }
+
+    function renderLoop() {
+      renderFrame();
+      animationFrameId = requestAnimationFrame(renderLoop);
+    }
+
+    function startRendering() {
+      stopRendering();
+      renderLoop();
+    }
+
+    function stopRendering() {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    }
+
+    function updateStaticPreview() {
+      updateLabels();
+      updateBackgroundInfo();
+
+      if (video.src && video.videoWidth) {
+        renderFrame();
+      } else {
+        drawIdleBackground();
+      }
+    }
+
+    function updateLabels() {
+      cellValue.textContent = cellSizeSlider.value;
+      thresholdValue.textContent = thresholdSlider.value;
+      shapeScaleValue.textContent = shapeScaleSlider.value;
+      videoScaleValue.textContent = videoScaleSlider.value;
+      offsetXValue.textContent = videoOffsetXSlider.value;
+      offsetYValue.textContent = videoOffsetYSlider.value;
+    }
+
+    function loadVideo(file) {
+      if (!file || !file.type.startsWith("video/")) {
+        statusText.textContent = "Please upload a valid video file";
+        return;
+      }
+
+      if (currentURL) {
+        URL.revokeObjectURL(currentURL);
+      }
+
+      currentURL = URL.createObjectURL(file);
+      video.src = currentURL;
+      video.load();
+
+      overlayMessage.classList.add("hidden");
+      playPauseBtn.disabled = false;
+      exportBtn.disabled = false;
+      playPauseBtn.textContent = "Play";
+      exportBtn.textContent = "Export";
+      exportBtn.classList.remove("recording-style");
+      statusText.textContent = file.name;
+      exportStatus.textContent = "Not recording";
+      exportStatus.classList.remove("recording");
+    }
+
+    function getSupportedMimeType() {
+      const types = [
+        "video/webm;codecs=vp9",
+        "video/webm;codecs=vp8",
+        "video/webm"
+      ];
+
+      for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) return type;
+      }
+
+      return "";
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+    }
+
+    async function startRecording() {
+      if (!video.src) return;
+
+      const exportDims = getExportDimensions();
+      canvas.width = exportDims.width;
+      canvas.height = exportDims.height;
+      canvasInfo.textContent = `${canvas.width} × ${canvas.height}`;
+
+      const stream = canvas.captureStream(30);
+      const mimeType = getSupportedMimeType();
+      recordedChunks = [];
+
+      try {
+        mediaRecorder = mimeType
+          ? new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 9000000 })
+          : new MediaRecorder(stream);
+      } catch (err) {
+        alert("Recording is not supported in this browser.");
+        resizeCanvas();
+        updateStaticPreview();
+        return;
+      }
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) recordedChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const finalType = mimeType || "video/webm";
+        const blob = new Blob(recordedChunks, { type: finalType });
+        const baseName = videoUpload.files[0]
+          ? videoUpload.files[0].name.replace(/\.[^/.]+$/, "")
+          : "shape-video";
+
+        const suffix = bgMode.value === "transparent" ? "transparent-shapes" : "shapes";
+        downloadBlob(blob, `${baseName}-${suffix}.webm`);
+
+        isRecording = false;
+        exportBtn.textContent = "Export";
+        exportBtn.classList.remove("recording-style");
+        exportStatus.textContent = "Export complete";
+        exportStatus.classList.remove("recording");
+
+        resizeCanvas();
+        updateStaticPreview();
+      };
+
+      isRecording = true;
+      exportBtn.textContent = "Stop";
+      exportBtn.classList.add("recording-style");
+      exportStatus.textContent = "Recording...";
+      exportStatus.classList.add("recording");
+
+      video.currentTime = 0;
+      renderFrame();
+
+      mediaRecorder.start();
+      startRendering();
+
+      try {
+        await video.play();
+      } catch (err) {
+        statusText.textContent = "Playback blocked. Click Play first, then export.";
+      }
+    }
+
+    function resetControls() {
+      shapeType.value = "circle";
+      bgMode.value = "solid";
+      bgColorInput.value = "#d8cdb8";
+      cellSizeSlider.value = 14;
+      thresholdSlider.value = 128;
+      shapeScaleSlider.value = 100;
+      videoScaleSlider.value = 100;
+      videoOffsetXSlider.value = 0;
+      videoOffsetYSlider.value = 0;
+      outputSize.value = "preview";
+      updateStaticPreview();
+    }
+
+    video.addEventListener("loadedmetadata", () => {
+      resizeCanvas();
+      renderFrame();
+    });
+
+    video.addEventListener("play", () => {
+      playPauseBtn.textContent = "Pause";
+      statusText.textContent = "Playing";
+      startRendering();
+    });
+
+    video.addEventListener("pause", () => {
+      playPauseBtn.textContent = "Play";
+      if (!video.ended && statusText.textContent === "Playing") statusText.textContent = "Paused";
+      stopRendering();
+      renderFrame();
+    });
+
+    video.addEventListener("ended", () => {
+      playPauseBtn.textContent = "Play";
+      statusText.textContent = "Finished";
+      stopRendering();
+      renderFrame();
+
+      if (isRecording) stopRecording();
+    });
+
+    playPauseBtn.addEventListener("click", async () => {
+      if (video.paused) {
+        try {
+          await video.play();
+        } catch (err) {
+          statusText.textContent = "Click again to allow playback";
+        }
+      } else {
+        video.pause();
+      }
+    });
+
+    exportBtn.addEventListener("click", async () => {
+      if (!video.src) return;
+
+      if (!isRecording) {
+        await startRecording();
+      } else {
+        video.pause();
+        stopRecording();
+      }
+    });
+
+    videoUpload.addEventListener("change", (e) => loadVideo(e.target.files[0]));
+
+    stage.addEventListener("dragover", (e) => e.preventDefault());
+    stage.addEventListener("drop", (e) => {
+      e.preventDefault();
+      loadVideo(e.dataTransfer.files[0]);
+    });
+
+    const liveControls = [
+      shapeType,
+      bgMode,
+      bgColorInput,
+      cellSizeSlider,
+      thresholdSlider,
+      shapeScaleSlider,
+      videoScaleSlider,
+      videoOffsetXSlider,
+      videoOffsetYSlider,
+      outputSize
+    ];
+
+    liveControls.forEach((el) => {
+      el.addEventListener("input", updateStaticPreview);
+      el.addEventListener("change", updateStaticPreview);
+    });
+
+    resetBtn.addEventListener("click", resetControls);
+
+    window.addEventListener("resize", () => {
+      if (!isRecording) {
+        resizeCanvas();
+        updateStaticPreview();
+      }
+    });
+
+    updateLabels();
+    resizeCanvas();
+  </script>
+</body>
+</html>
