@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShapeLab Video Exporter</title>
+  <title>ShapeLab</title>
   <style>
     * {
       box-sizing: border-box;
@@ -14,7 +14,6 @@
       --surface: rgba(255, 255, 255, 0.78);
       --surface-solid: #ffffff;
       --surface-secondary: #f2f2f4;
-      --surface-tertiary: #e9e9ec;
       --text: #1d1d1f;
       --secondary: #6e6e73;
       --tertiary: #98989d;
@@ -23,15 +22,11 @@
       --blue: #007aff;
       --blue-hover: #006ee6;
       --red: #ff3b30;
+      --green: #34c759;
       --shadow: 0 18px 60px rgba(0, 0, 0, 0.12);
       --radius-xl: 28px;
       --radius-lg: 18px;
-      --radius-md: 12px;
-      --sidebar-width: 342px;
-    }
-
-    body.dark-preview {
-      --preview-chrome: #1c1c1e;
+      --sidebar-width: 350px;
     }
 
     body {
@@ -55,7 +50,7 @@
     }
 
     .app-shell {
-      width: min(1440px, 100%);
+      width: min(1480px, 100%);
       min-height: calc(100vh - 48px);
       margin: 0 auto;
       display: grid;
@@ -66,10 +61,11 @@
       box-shadow: var(--shadow);
       overflow: hidden;
       backdrop-filter: blur(26px);
+      -webkit-backdrop-filter: blur(26px);
     }
 
     .toolbar {
-      height: 76px;
+      min-height: 76px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -78,6 +74,7 @@
       border-bottom: 1px solid var(--border);
       background: rgba(255, 255, 255, 0.72);
       backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
     }
 
     .app-title {
@@ -155,7 +152,7 @@
       padding: 18px;
       min-width: 0;
       display: grid;
-      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
       gap: 14px;
       background: rgba(255, 255, 255, 0.36);
     }
@@ -189,7 +186,7 @@
 
     .control {
       display: grid;
-      grid-template-columns: minmax(96px, 0.9fr) minmax(0, 1.1fr);
+      grid-template-columns: minmax(104px, 0.9fr) minmax(0, 1.1fr);
       align-items: center;
       gap: 12px;
       min-height: 52px;
@@ -227,11 +224,6 @@
       justify-content: space-between;
       gap: 12px;
       align-items: baseline;
-    }
-
-    .range-wrap {
-      display: grid;
-      gap: 7px;
     }
 
     input[type="file"] {
@@ -299,6 +291,7 @@
       cursor: pointer;
       transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
       user-select: none;
+      white-space: nowrap;
     }
 
     button:hover,
@@ -333,18 +326,10 @@
       background: var(--blue-hover);
     }
 
-    .recording-style {
-      border-color: rgba(255, 59, 48, 0.35) !important;
-      background: rgba(255, 59, 48, 0.12) !important;
-      color: var(--red) !important;
-    }
-
-    .hidden-file {
-      display: none;
-    }
-
-    .top-file-input {
-      display: none;
+    .danger-btn.active {
+      border-color: rgba(255, 59, 48, 0.35);
+      background: rgba(255, 59, 48, 0.12);
+      color: var(--red);
     }
 
     .preview-header {
@@ -395,21 +380,10 @@
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: var(--tertiary);
-    }
-
-    .chip-dot.live {
-      background: #34c759;
+      background: var(--green);
     }
 
     .stage-card {
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
-      min-height: 0;
-      gap: 12px;
-    }
-
-    .stage-wrap {
       min-height: 0;
       display: grid;
       place-items: center;
@@ -425,16 +399,19 @@
       border: 1px solid var(--border);
       overflow: hidden;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      padding: 18px;
     }
 
     .stage {
       position: relative;
       width: 100%;
+      max-height: 100%;
       aspect-ratio: 16 / 9;
       display: grid;
       place-items: center;
       overflow: hidden;
       background: transparent;
+      border-radius: 18px;
     }
 
     canvas {
@@ -442,6 +419,8 @@
       height: 100%;
       display: block;
       background: transparent;
+      border-radius: 18px;
+      box-shadow: 0 12px 42px rgba(0, 0, 0, 0.16);
     }
 
     .overlay-message {
@@ -503,6 +482,10 @@
       color: var(--red) !important;
     }
 
+    .exporting {
+      color: var(--blue) !important;
+    }
+
     .note {
       margin: 0;
       color: var(--secondary);
@@ -514,7 +497,7 @@
       display: none;
     }
 
-    @media (max-width: 1080px) {
+    @media (max-width: 1120px) {
       body {
         padding: 14px;
       }
@@ -542,9 +525,8 @@
       }
     }
 
-    @media (max-width: 760px) {
+    @media (max-width: 780px) {
       .toolbar {
-        height: auto;
         align-items: flex-start;
         flex-direction: column;
       }
@@ -594,8 +576,9 @@
 
       <div class="toolbar-actions">
         <label class="upload-btn" for="videoUpload">Choose Video</label>
-        <button id="playPause" disabled>Play</button>
-        <button id="exportBtn" class="primary-btn" disabled>Export</button>
+        <button id="playPauseBtn" disabled>Play</button>
+        <button id="webmExportBtn" class="primary-btn" disabled>Export WebM</button>
+        <button id="framesExportBtn" disabled>Export PNG Frames</button>
       </div>
     </header>
 
@@ -651,9 +634,9 @@
             <div class="control full">
               <div class="range-head">
                 <label for="cellSize">Spacing</label>
-                <span class="value-label" id="cellValue">14</span>
+                <span class="value-label" id="cellSizeValue">14</span>
               </div>
-              <input id="cellSize" type="range" min="5" max="60" value="14" />
+              <input id="cellSize" type="range" min="5" max="80" value="14" />
             </div>
 
             <div class="control full">
@@ -666,10 +649,10 @@
 
             <div class="control full">
               <div class="range-head">
-                <label for="shapeScale">Size</label>
+                <label for="shapeScale">Shape Size</label>
                 <span class="value-label"><span id="shapeScaleValue">100</span>%</span>
               </div>
-              <input id="shapeScale" type="range" min="20" max="180" value="100" />
+              <input id="shapeScale" type="range" min="20" max="200" value="100" />
             </div>
           </div>
         </section>
@@ -688,7 +671,7 @@
             <div class="control full">
               <div class="range-head">
                 <label for="videoOffsetX">Position X</label>
-                <span class="value-label"><span id="offsetXValue">0</span>%</span>
+                <span class="value-label"><span id="videoOffsetXValue">0</span>%</span>
               </div>
               <input id="videoOffsetX" type="range" min="-100" max="100" value="0" />
             </div>
@@ -696,7 +679,7 @@
             <div class="control full">
               <div class="range-head">
                 <label for="videoOffsetY">Position Y</label>
-                <span class="value-label"><span id="offsetYValue">0</span>%</span>
+                <span class="value-label"><span id="videoOffsetYValue">0</span>%</span>
               </div>
               <input id="videoOffsetY" type="range" min="-100" max="100" value="0" />
             </div>
@@ -711,11 +694,32 @@
               <select id="outputSize">
                 <option value="preview">Preview Size</option>
                 <option value="720">1280 × 720</option>
-                <option value="1080">1920 × 1080</option>
+                <option value="1080" selected>1920 × 1080</option>
+                <option value="4k">3840 × 2160</option>
                 <option value="square">1080 × 1080</option>
                 <option value="vertical">1080 × 1920</option>
               </select>
             </div>
+
+            <div class="control">
+              <label for="exportFps">FPS</label>
+              <select id="exportFps">
+                <option value="12">12 fps</option>
+                <option value="24">24 fps</option>
+                <option value="30" selected>30 fps</option>
+                <option value="60">60 fps</option>
+              </select>
+            </div>
+
+            <div class="control">
+              <label for="webmQuality">WebM Quality</label>
+              <select id="webmQuality">
+                <option value="25000000">High</option>
+                <option value="50000000" selected>Very High</option>
+                <option value="90000000">Extreme</option>
+              </select>
+            </div>
+
             <div class="control full">
               <button id="resetBtn">Reset Controls</button>
             </div>
@@ -730,24 +734,22 @@
             <span>Drag a video onto the canvas or choose a file.</span>
           </div>
           <div class="preview-status">
-            <span class="chip"><span class="chip-dot live"></span>Local render</span>
-            <span class="chip">WebM output</span>
+            <span class="chip"><span class="chip-dot"></span>Local render</span>
+            <span class="chip">PNG frames = clean export</span>
           </div>
         </div>
 
         <section class="stage-card">
-          <section class="stage-wrap">
-            <div class="stage" id="stage">
-              <canvas id="canvas"></canvas>
-              <div class="overlay-message" id="overlayMessage">Drop video here</div>
-            </div>
-          </section>
+          <div class="stage" id="stage">
+            <canvas id="canvas"></canvas>
+            <div class="overlay-message" id="overlayMessage">Drop video here</div>
+          </div>
         </section>
 
         <section class="status-bar">
           <div class="status-item">
             <span>Status</span>
-            <strong id="status">No video loaded</strong>
+            <strong id="statusText">No video loaded</strong>
           </div>
           <div class="status-item">
             <span>Canvas</span>
@@ -759,11 +761,13 @@
           </div>
           <div class="status-item">
             <span>Export</span>
-            <strong id="exportStatus">Not recording</strong>
+            <strong id="exportInfo">Idle</strong>
           </div>
         </section>
 
-        <p class="note">Transparent exports are saved as WebM. Alpha transparency works best with VP9 WebM in Chromium-based browsers.</p>
+        <p class="note">
+          Use Export PNG Frames for the cleanest result. It writes lossless PNG frames to a folder, avoiding WebM compression artifacts around sharp black-and-white shapes.
+        </p>
       </main>
     </section>
 
@@ -774,88 +778,93 @@
     const videoUpload = document.getElementById("videoUpload");
     const shapeType = document.getElementById("shapeType");
     const bgMode = document.getElementById("bgMode");
-    const bgColorInput = document.getElementById("bgColor");
-    const cellSizeSlider = document.getElementById("cellSize");
-    const thresholdSlider = document.getElementById("threshold");
-    const shapeScaleSlider = document.getElementById("shapeScale");
-    const videoScaleSlider = document.getElementById("videoScale");
-    const videoOffsetXSlider = document.getElementById("videoOffsetX");
-    const videoOffsetYSlider = document.getElementById("videoOffsetY");
+    const bgColor = document.getElementById("bgColor");
+    const cellSize = document.getElementById("cellSize");
+    const threshold = document.getElementById("threshold");
+    const shapeScale = document.getElementById("shapeScale");
+    const videoScale = document.getElementById("videoScale");
+    const videoOffsetX = document.getElementById("videoOffsetX");
+    const videoOffsetY = document.getElementById("videoOffsetY");
     const outputSize = document.getElementById("outputSize");
-    const playPauseBtn = document.getElementById("playPause");
-    const exportBtn = document.getElementById("exportBtn");
+    const exportFps = document.getElementById("exportFps");
+    const webmQuality = document.getElementById("webmQuality");
+    const playPauseBtn = document.getElementById("playPauseBtn");
+    const webmExportBtn = document.getElementById("webmExportBtn");
+    const framesExportBtn = document.getElementById("framesExportBtn");
     const resetBtn = document.getElementById("resetBtn");
     const stage = document.getElementById("stage");
     const canvas = document.getElementById("canvas");
     const overlayMessage = document.getElementById("overlayMessage");
-    const statusText = document.getElementById("status");
+    const statusText = document.getElementById("statusText");
     const canvasInfo = document.getElementById("canvasInfo");
     const backgroundInfo = document.getElementById("backgroundInfo");
-    const exportStatus = document.getElementById("exportStatus");
-    const cellValue = document.getElementById("cellValue");
+    const exportInfo = document.getElementById("exportInfo");
+    const video = document.getElementById("video");
+
+    const cellSizeValue = document.getElementById("cellSizeValue");
     const thresholdValue = document.getElementById("thresholdValue");
     const shapeScaleValue = document.getElementById("shapeScaleValue");
     const videoScaleValue = document.getElementById("videoScaleValue");
-    const offsetXValue = document.getElementById("offsetXValue");
-    const offsetYValue = document.getElementById("offsetYValue");
-    const video = document.getElementById("video");
+    const videoOffsetXValue = document.getElementById("videoOffsetXValue");
+    const videoOffsetYValue = document.getElementById("videoOffsetYValue");
 
     const ctx = canvas.getContext("2d");
     const sampleCanvas = document.createElement("canvas");
     const sampleCtx = sampleCanvas.getContext("2d", { willReadFrequently: true });
 
+    let currentObjectUrl = null;
     let animationFrameId = null;
-    let currentURL = null;
     let mediaRecorder = null;
     let recordedChunks = [];
-    let isRecording = false;
+    let isRecordingWebM = false;
+    let isExportingFrames = false;
     let previewWidth = 0;
     let previewHeight = 0;
+    let fileBaseName = "shapelab-video";
+
+    function updateLabels() {
+      cellSizeValue.textContent = cellSize.value;
+      thresholdValue.textContent = threshold.value;
+      shapeScaleValue.textContent = shapeScale.value;
+      videoScaleValue.textContent = videoScale.value;
+      videoOffsetXValue.textContent = videoOffsetX.value;
+      videoOffsetYValue.textContent = videoOffsetY.value;
+      backgroundInfo.textContent = bgMode.value === "transparent" ? "Transparent" : "Solid colour";
+      bgColor.disabled = bgMode.value === "transparent";
+    }
 
     function getExportDimensions() {
-      const selected = outputSize.value;
-
-      if (selected === "720") return { width: 1280, height: 720 };
-      if (selected === "1080") return { width: 1920, height: 1080 };
-      if (selected === "square") return { width: 1080, height: 1080 };
-      if (selected === "vertical") return { width: 1080, height: 1920 };
-
+      if (outputSize.value === "720") return { width: 1280, height: 720 };
+      if (outputSize.value === "1080") return { width: 1920, height: 1080 };
+      if (outputSize.value === "4k") return { width: 3840, height: 2160 };
+      if (outputSize.value === "square") return { width: 1080, height: 1080 };
+      if (outputSize.value === "vertical") return { width: 1080, height: 1920 };
       return { width: previewWidth, height: previewHeight };
     }
 
     function resizeCanvas() {
+      if (isRecordingWebM || isExportingFrames) return;
+
       const rect = stage.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
 
-      previewWidth = Math.round(rect.width * dpr);
-      previewHeight = Math.round(rect.height * dpr);
+      previewWidth = Math.max(320, Math.round(rect.width * dpr));
+      previewHeight = Math.max(180, Math.round(rect.height * dpr));
 
-      if (!isRecording || outputSize.value === "preview") {
-        canvas.width = previewWidth;
-        canvas.height = previewHeight;
-      }
+      canvas.width = previewWidth;
+      canvas.height = previewHeight;
 
       canvasInfo.textContent = `${canvas.width} × ${canvas.height}`;
-      updateBackgroundInfo();
-      drawIdleBackground();
+      updateStaticPreview();
     }
 
-    function updateBackgroundInfo() {
-      backgroundInfo.textContent = bgMode.value === "transparent" ? "Transparent" : "Solid colour";
-      bgColorInput.disabled = bgMode.value === "transparent";
-    }
-
-    function clearBackground(targetCtx, width, height) {
-      targetCtx.clearRect(0, 0, width, height);
+    function clearBackground() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (bgMode.value === "solid") {
-        targetCtx.fillStyle = bgColorInput.value;
-        targetCtx.fillRect(0, 0, width, height);
+        ctx.fillStyle = bgColor.value;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
-    }
-
-    function drawIdleBackground() {
-      clearBackground(ctx, canvas.width, canvas.height);
     }
 
     function getFitRect(videoWidth, videoHeight, targetWidth, targetHeight) {
@@ -873,20 +882,22 @@
         drawWidth = targetHeight * videoRatio;
       }
 
-      const scale = Number(videoScaleSlider.value) / 100;
+      const scale = Number(videoScale.value) / 100;
       drawWidth *= scale;
       drawHeight *= scale;
 
-      const offsetX = Number(videoOffsetXSlider.value) / 100;
-      const offsetY = Number(videoOffsetYSlider.value) / 100;
+      const moveX = Number(videoOffsetX.value) / 100;
+      const moveY = Number(videoOffsetY.value) / 100;
 
-      const x = (targetWidth - drawWidth) / 2 + offsetX * targetWidth * 0.5;
-      const y = (targetHeight - drawHeight) / 2 + offsetY * targetHeight * 0.5;
-
-      return { x, y, drawWidth, drawHeight };
+      return {
+        x: (targetWidth - drawWidth) / 2 + moveX * targetWidth * 0.5,
+        y: (targetHeight - drawHeight) / 2 + moveY * targetHeight * 0.5,
+        width: drawWidth,
+        height: drawHeight
+      };
     }
 
-    function polygon(points) {
+    function drawPolygon(points) {
       ctx.beginPath();
       points.forEach((point, index) => {
         if (index === 0) ctx.moveTo(point.x, point.y);
@@ -898,14 +909,17 @@
 
     function drawStar(x, y, outerRadius, innerRadius, points) {
       ctx.beginPath();
+
       for (let i = 0; i < points * 2; i++) {
         const angle = -Math.PI / 2 + i * Math.PI / points;
         const radius = i % 2 === 0 ? outerRadius : innerRadius;
         const px = x + Math.cos(angle) * radius;
         const py = y + Math.sin(angle) * radius;
+
         if (i === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       }
+
       ctx.closePath();
       ctx.fill();
     }
@@ -930,7 +944,7 @@
 
       if (type === "triangle") {
         const h = size * 0.95;
-        polygon([
+        drawPolygon([
           { x, y: y - h / 2 },
           { x: x - size / 2, y: y + h / 2 },
           { x: x + size / 2, y: y + h / 2 }
@@ -939,7 +953,7 @@
       }
 
       if (type === "diamond") {
-        polygon([
+        drawPolygon([
           { x, y: y - size / 2 },
           { x: x + size / 2, y },
           { x, y: y + size / 2 },
@@ -951,11 +965,16 @@
       if (type === "hexagon") {
         const r = size / 2;
         const points = [];
+
         for (let i = 0; i < 6; i++) {
           const angle = Math.PI / 6 + i * Math.PI / 3;
-          points.push({ x: x + Math.cos(angle) * r, y: y + Math.sin(angle) * r });
+          points.push({
+            x: x + Math.cos(angle) * r,
+            y: y + Math.sin(angle) * r
+          });
         }
-        polygon(points);
+
+        drawPolygon(points);
         return;
       }
 
@@ -1009,27 +1028,31 @@
     }
 
     function renderFrame() {
+      updateLabels();
+      clearBackground();
+
       if (!video.videoWidth || !video.videoHeight) return;
 
-      const cellSize = Number(cellSizeSlider.value);
-      const threshold = Number(thresholdSlider.value);
-      const shapeScale = Number(shapeScaleSlider.value) / 100;
+      const cell = Number(cellSize.value);
+      const limit = Number(threshold.value);
+      const scale = Number(shapeScale.value) / 100;
       const shape = shapeType.value;
 
-      const cols = Math.max(1, Math.floor(canvas.width / cellSize));
-      const rows = Math.max(1, Math.floor(canvas.height / cellSize));
+      const cols = Math.max(1, Math.floor(canvas.width / cell));
+      const rows = Math.max(1, Math.floor(canvas.height / cell));
 
       sampleCanvas.width = cols;
       sampleCanvas.height = rows;
 
       sampleCtx.clearRect(0, 0, cols, rows);
+      sampleCtx.imageSmoothingEnabled = true;
 
       const fit = getFitRect(video.videoWidth, video.videoHeight, cols, rows);
-      sampleCtx.drawImage(video, fit.x, fit.y, fit.drawWidth, fit.drawHeight);
+      sampleCtx.drawImage(video, fit.x, fit.y, fit.width, fit.height);
 
       const frameData = sampleCtx.getImageData(0, 0, cols, rows).data;
 
-      clearBackground(ctx, canvas.width, canvas.height);
+      clearBackground();
 
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
@@ -1042,30 +1065,34 @@
           if (a < 0.05) continue;
 
           const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
-          const color = brightness >= threshold ? "#ffffff" : "#000000";
-          const distanceFromThreshold = Math.abs(brightness - threshold) / 255;
-          const baseSize = cellSize * (0.25 + distanceFromThreshold * 1.2);
-          const size = Math.max(2, Math.min(baseSize * shapeScale, cellSize * 1.45));
+          const color = brightness >= limit ? "#ffffff" : "#000000";
+          const distanceFromThreshold = Math.abs(brightness - limit) / 255;
+          const baseSize = cell * (0.25 + distanceFromThreshold * 1.2);
+          const size = Math.max(2, Math.min(baseSize * scale, cell * 1.55));
 
-          const px = x * cellSize + cellSize / 2;
-          const py = y * cellSize + cellSize / 2;
-
-          drawShape(shape, px, py, size, color);
+          drawShape(
+            shape,
+            x * cell + cell / 2,
+            y * cell + cell / 2,
+            size,
+            color
+          );
         }
       }
     }
 
-    function renderLoop() {
-      renderFrame();
-      animationFrameId = requestAnimationFrame(renderLoop);
+    function startRenderLoop() {
+      stopRenderLoop();
+
+      function loop() {
+        renderFrame();
+        animationFrameId = requestAnimationFrame(loop);
+      }
+
+      loop();
     }
 
-    function startRendering() {
-      stopRendering();
-      renderLoop();
-    }
-
-    function stopRendering() {
+    function stopRenderLoop() {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
@@ -1074,50 +1101,68 @@
 
     function updateStaticPreview() {
       updateLabels();
-      updateBackgroundInfo();
 
       if (video.src && video.videoWidth) {
         renderFrame();
       } else {
-        drawIdleBackground();
+        clearBackground();
       }
     }
 
-    function updateLabels() {
-      cellValue.textContent = cellSizeSlider.value;
-      thresholdValue.textContent = thresholdSlider.value;
-      shapeScaleValue.textContent = shapeScaleSlider.value;
-      videoScaleValue.textContent = videoScaleSlider.value;
-      offsetXValue.textContent = videoOffsetXSlider.value;
-      offsetYValue.textContent = videoOffsetYSlider.value;
+    function setControlsDisabled(disabled) {
+      const controls = [
+        videoUpload,
+        shapeType,
+        bgMode,
+        bgColor,
+        cellSize,
+        threshold,
+        shapeScale,
+        videoScale,
+        videoOffsetX,
+        videoOffsetY,
+        outputSize,
+        exportFps,
+        webmQuality,
+        resetBtn
+      ];
+
+      controls.forEach(control => {
+        control.disabled = disabled;
+      });
+
+      playPauseBtn.disabled = disabled || !video.src;
+      webmExportBtn.disabled = disabled || !video.src;
+      framesExportBtn.disabled = disabled || !video.src;
     }
 
     function loadVideo(file) {
       if (!file || !file.type.startsWith("video/")) {
-        statusText.textContent = "Please upload a valid video file";
+        statusText.textContent = "Please choose a video file";
         return;
       }
 
-      if (currentURL) {
-        URL.revokeObjectURL(currentURL);
+      if (currentObjectUrl) {
+        URL.revokeObjectURL(currentObjectUrl);
       }
 
-      currentURL = URL.createObjectURL(file);
-      video.src = currentURL;
+      currentObjectUrl = URL.createObjectURL(file);
+      fileBaseName = file.name.replace(/\.[^/.]+$/, "") || "shapelab-video";
+
+      video.src = currentObjectUrl;
       video.load();
 
       overlayMessage.classList.add("hidden");
-      playPauseBtn.disabled = false;
-      exportBtn.disabled = false;
-      playPauseBtn.textContent = "Play";
-      exportBtn.textContent = "Export";
-      exportBtn.classList.remove("recording-style");
       statusText.textContent = file.name;
-      exportStatus.textContent = "Not recording";
-      exportStatus.classList.remove("recording");
+      exportInfo.textContent = "Idle";
+      exportInfo.classList.remove("recording", "exporting");
+
+      playPauseBtn.disabled = false;
+      webmExportBtn.disabled = false;
+      framesExportBtn.disabled = false;
     }
 
-    function getSupportedMimeType() {
+    function getSupportedWebMMimeType() {
       const types = [
         "video/webm;codecs=vp9",
         "video/webm;codecs=vp8",
@@ -1143,89 +1188,198 @@
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-      }
+    function canvasToBlob(type = "image/png", quality = 1) {
+      return new Promise(resolve => {
+        canvas.toBlob(resolve, type, quality);
+      });
     }
 
-    async function startRecording() {
-      if (!video.src) return;
+    function seekVideoTo(time) {
+      return new Promise(resolve => {
+        const safeTime = Math.min(Math.max(0, time), Math.max(0, video.duration - 0.001));
 
-      const exportDims = getExportDimensions();
-      canvas.width = exportDims.width;
-      canvas.height = exportDims.height;
+        const finish = () => {
+          video.removeEventListener("seeked", finish);
+          requestAnimationFrame(() => resolve());
+        };
+
+        video.addEventListener("seeked", finish, { once: true });
+        video.currentTime = safeTime;
+
+        if (Math.abs(video.currentTime - safeTime) < 0.002) {
+          video.removeEventListener("seeked", finish);
+          requestAnimationFrame(() => resolve());
+        }
+      });
+    }
+
+    function restorePreviewCanvas() {
+      isRecordingWebM = false;
+      isExportingFrames = false;
+      setControlsDisabled(false);
+      resizeCanvas();
+      updateStaticPreview();
+    }
+
+    async function startWebMExport() {
+      if (!video.src || isRecordingWebM || isExportingFrames) return;
+
+      const dims = getExportDimensions();
+      const fps = Number(exportFps.value);
+      const bitrate = Number(webmQuality.value);
+      const mimeType = getSupportedWebMMimeType();
+
+      isRecordingWebM = true;
+      setControlsDisabled(true);
+      webmExportBtn.disabled = false;
+      webmExportBtn.textContent = "Stop";
+      webmExportBtn.classList.add("active");
+      exportInfo.textContent = "Recording WebM...";
+      exportInfo.classList.add("recording");
+
+      stopRenderLoop();
+      video.pause();
+
+      canvas.width = dims.width;
+      canvas.height = dims.height;
       canvasInfo.textContent = `${canvas.width} × ${canvas.height}`;
 
-      const stream = canvas.captureStream(30);
-      const mimeType = getSupportedMimeType();
       recordedChunks = [];
+
+      const stream = canvas.captureStream(fps);
 
       try {
         mediaRecorder = mimeType
-          ? new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 9000000 })
-          : new MediaRecorder(stream);
-      } catch (err) {
-        alert("Recording is not supported in this browser.");
-        resizeCanvas();
-        updateStaticPreview();
+          ? new MediaRecorder(stream, { mimeType, videoBitsPerSecond: bitrate })
+          : new MediaRecorder(stream, { videoBitsPerSecond: bitrate });
+      } catch (error) {
+        alert("WebM recording is not supported in this browser.");
+        webmExportBtn.textContent = "Export WebM";
+        webmExportBtn.classList.remove("active");
+        exportInfo.classList.remove("recording");
+        restorePreviewCanvas();
         return;
       }
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) recordedChunks.push(event.data);
+      mediaRecorder.ondataavailable = event => {
+        if (event.data && event.data.size > 0) {
+          recordedChunks.push(event.data);
+        }
       };
 
       mediaRecorder.onstop = () => {
-        const finalType = mimeType || "video/webm";
-        const blob = new Blob(recordedChunks, { type: finalType });
-        const baseName = videoUpload.files[0]
-          ? videoUpload.files[0].name.replace(/\.[^/.]+$/, "")
-          : "shape-video";
+        const blob = new Blob(recordedChunks, { type: mimeType || "video/webm" });
+        downloadBlob(blob, `${fileBaseName}-shapelab.webm`);
 
-        const suffix = bgMode.value === "transparent" ? "transparent-shapes" : "shapes";
-        downloadBlob(blob, `${baseName}-${suffix}.webm`);
+        webmExportBtn.textContent = "Export WebM";
+        webmExportBtn.classList.remove("active");
+        exportInfo.textContent = "WebM complete";
+        exportInfo.classList.remove("recording");
 
-        isRecording = false;
-        exportBtn.textContent = "Export";
-        exportBtn.classList.remove("recording-style");
-        exportStatus.textContent = "Export complete";
-        exportStatus.classList.remove("recording");
-
-        resizeCanvas();
-        updateStaticPreview();
+        restorePreviewCanvas();
       };
 
-      isRecording = true;
-      exportBtn.textContent = "Stop";
-      exportBtn.classList.add("recording-style");
-      exportStatus.textContent = "Recording...";
-      exportStatus.classList.add("recording");
-
-      video.currentTime = 0;
+      await seekVideoTo(0);
       renderFrame();
 
-      mediaRecorder.start();
-      startRendering();
+      mediaRecorder.start(1000);
+      startRenderLoop();
 
       try {
         await video.play();
-      } catch (err) {
-        statusText.textContent = "Playback blocked. Click Play first, then export.";
+      } catch (error) {
+        exportInfo.textContent = "Click Play once, then export again";
+        if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
       }
+    }
+
+    function stopWebMExport() {
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
+
+      video.pause();
+      stopRenderLoop();
+    }
+
+    async function exportPngFrames() {
+      if (!video.src || isRecordingWebM || isExportingFrames) return;
+
+      if (!window.showDirectoryPicker) {
+        alert("PNG frame export needs a browser with folder saving support. Use the WebM export here, or open this in a browser that supports choosing a folder.");
+        return;
+      }
+
+      const fps = Number(exportFps.value);
+      const dims = getExportDimensions();
+      const totalFrames = Math.max(1, Math.ceil(video.duration * fps));
+      const paddedLength = String(totalFrames).length;
+
+      let directoryHandle;
+
+      try {
+        directoryHandle = await window.showDirectoryPicker({
+          mode: "readwrite",
+          startIn: "videos"
+        });
+      } catch (error) {
+        return;
+      }
+
+      isExportingFrames = true;
+      setControlsDisabled(true);
+      stopRenderLoop();
+      video.pause();
+
+      canvas.width = dims.width;
+      canvas.height = dims.height;
+      canvasInfo.textContent = `${canvas.width} × ${canvas.height}`;
+
+      exportInfo.textContent = `Exporting 0 / ${totalFrames}`;
+      exportInfo.classList.add("exporting");
+
+      for (let frame = 0; frame < totalFrames; frame++) {
+        const time = frame / fps;
+        await seekVideoTo(time);
+        renderFrame();
+
+        const blob = await canvasToBlob("image/png", 1);
+
+        if (!blob) {
+          continue;
+        }
+
+        const frameName = `${fileBaseName}_${String(frame + 1).padStart(paddedLength, "0")}.png`;
+        const fileHandle = await directoryHandle.getFileHandle(frameName, { create: true });
+        const writable = await fileHandle.createWritable();
+
+        await writable.write(blob);
+        await writable.close();
+
+        exportInfo.textContent = `Exporting ${frame + 1} / ${totalFrames}`;
+
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+
+      exportInfo.textContent = "PNG frames complete";
+      exportInfo.classList.remove("exporting");
+
+      restorePreviewCanvas();
     }
 
     function resetControls() {
       shapeType.value = "circle";
       bgMode.value = "solid";
-      bgColorInput.value = "#d8cdb8";
-      cellSizeSlider.value = 14;
-      thresholdSlider.value = 128;
-      shapeScaleSlider.value = 100;
-      videoScaleSlider.value = 100;
-      videoOffsetXSlider.value = 0;
-      videoOffsetYSlider.value = 0;
-      outputSize.value = "preview";
+      bgColor.value = "#d8cdb8";
+      cellSize.value = 14;
+      threshold.value = 128;
+      shapeScale.value = 100;
+      videoScale.value = 100;
+      videoOffsetX.value = 0;
+      videoOffsetY.value = 0;
+      outputSize.value = "1080";
+      exportFps.value = "30";
+      webmQuality.value = "50000000";
       updateStaticPreview();
     }
 
@@ -1237,30 +1391,40 @@
     video.addEventListener("play", () => {
       playPauseBtn.textContent = "Pause";
       statusText.textContent = "Playing";
-      startRendering();
+      startRenderLoop();
     });
 
     video.addEventListener("pause", () => {
       playPauseBtn.textContent = "Play";
-      if (!video.ended && statusText.textContent === "Playing") statusText.textContent = "Paused";
-      stopRendering();
-      renderFrame();
+
+      if (!video.ended && !isRecordingWebM && !isExportingFrames) {
+        statusText.textContent = "Paused";
+      }
+
+      if (!isRecordingWebM) {
+        stopRenderLoop();
+        renderFrame();
+      }
     });
 
     video.addEventListener("ended", () => {
       playPauseBtn.textContent = "Play";
       statusText.textContent = "Finished";
-      stopRendering();
+      stopRenderLoop();
       renderFrame();
 
-      if (isRecording) stopRecording();
+      if (isRecordingWebM) {
+        stopWebMExport();
+      }
     });
 
     playPauseBtn.addEventListener("click", async () => {
+      if (!video.src) return;
+
       if (video.paused) {
         try {
           await video.play();
-        } catch (err) {
+        } catch (error) {
           statusText.textContent = "Click again to allow playback";
         }
       } else {
@@ -1268,51 +1432,51 @@
       }
     });
 
-    exportBtn.addEventListener("click", async () => {
-      if (!video.src) return;
-
-      if (!isRecording) {
-        await startRecording();
+    webmExportBtn.addEventListener("click", async () => {
+      if (isRecordingWebM) {
+        stopWebMExport();
       } else {
-        video.pause();
-        stopRecording();
+        await startWebMExport();
       }
     });
 
-    videoUpload.addEventListener("change", (e) => loadVideo(e.target.files[0]));
+    framesExportBtn.addEventListener("click", exportPngFrames);
+    resetBtn.addEventListener("click", resetControls);
 
-    stage.addEventListener("dragover", (e) => e.preventDefault());
-    stage.addEventListener("drop", (e) => {
-      e.preventDefault();
-      loadVideo(e.dataTransfer.files[0]);
+    videoUpload.addEventListener("change", event => {
+      loadVideo(event.target.files[0]);
+    });
+
+    stage.addEventListener("dragover", event => {
+      event.preventDefault();
+    });
+
+    stage.addEventListener("drop", event => {
+      event.preventDefault();
+      loadVideo(event.dataTransfer.files[0]);
     });
 
     const liveControls = [
       shapeType,
       bgMode,
-      bgColorInput,
-      cellSizeSlider,
-      thresholdSlider,
-      shapeScaleSlider,
-      videoScaleSlider,
-      videoOffsetXSlider,
-      videoOffsetYSlider,
-      outputSize
+      bgColor,
+      cellSize,
+      threshold,
+      shapeScale,
+      videoScale,
+      videoOffsetX,
+      videoOffsetY,
+      outputSize,
+      exportFps,
+      webmQuality
     ];
 
-    liveControls.forEach((el) => {
-      el.addEventListener("input", updateStaticPreview);
-      el.addEventListener("change", updateStaticPreview);
+    liveControls.forEach(control => {
+      control.addEventListener("input", updateStaticPreview);
+      control.addEventListener("change", updateStaticPreview);
     });
 
-    resetBtn.addEventListener("click", resetControls);
-
-    window.addEventListener("resize", () => {
-      if (!isRecording) {
-        resizeCanvas();
-        updateStaticPreview();
-      }
-    });
+    window.addEventListener("resize", resizeCanvas);
 
     updateLabels();
     resizeCanvas();
