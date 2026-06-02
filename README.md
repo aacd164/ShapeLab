@@ -1,5 +1,7 @@
 ShapeLab
 
+https://aacd164.github.io/ShapeLab/
+
 ShapeLab is a browser-based motion graphics tool that converts uploaded videos into animated black-and-white shape systems. Instead of displaying a video normally, ShapeLab samples the video frame by frame and redraws it using graphic shapes such as circles, squares, triangles, diamonds, stars, crosses, rings, and lines.
 
 The project is built with HTML, CSS, JavaScript, and the Canvas API. Video processing happens locally in the browser, and the final result can be exported as a WebM video.
